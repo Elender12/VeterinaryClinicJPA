@@ -16,14 +16,15 @@ public class Treatment implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	@Id
-	@GeneratedValue(strategy=GenerationType.AUTO)
+	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private int id;
 
 	private String description;
 
-	private byte isVaccine;
+	@Column(nullable = false, columnDefinition = "TINYINT", length = 1)
+	private boolean isVaccine;
 
-	private float price;
+	private double price;
 
 	//bi-directional many-to-one association to AppliedTreatment
 	@OneToMany(mappedBy="treatment")
@@ -48,15 +49,15 @@ public class Treatment implements Serializable {
 		this.description = description;
 	}
 
-	public byte getIsVaccine() {
-		return this.isVaccine;
+	public boolean isVaccine() {
+		return isVaccine;
 	}
 
-	public void setIsVaccine(byte isVaccine) {
+	public void setVaccine(boolean isVaccine) {
 		this.isVaccine = isVaccine;
 	}
 
-	public float getPrice() {
+	public double getPrice() {
 		return this.price;
 	}
 

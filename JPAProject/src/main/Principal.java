@@ -1,15 +1,18 @@
 package main;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import dao.PatientDAO;
-import dao.TreatmentDAO;
+import model.AppliedTreatment;
 import model.Client;
 import model.Patient;
 import model.Treatment;
 import services.ClientService;
 import services.PatientService;
+import services.TreatmentService;
+import utils.DateHelper;
 import utils.Leer;
 
 public class Principal {
@@ -22,13 +25,21 @@ public class Principal {
 	final static int EDIT = 2;
 	final static int REGISTER = 1;
 	final static int LIST = 4;
-	final static int FIRST_QUERY= 1;
+	final static int FIRST_QUERY = 1;
 	final static int SECOND_QUERY = 2;
 	final static int MANAGE_CLIENT_OPTION = 1;
 	final static int MANAGE_PET_OPTION = 2;
 	final static int CONSULT_TREATMENT_INFO = 3;
 	final static int EXIT = 0;
-
+	final static String MAIN_MENU = "******************\n"+MANAGE_CLIENT_OPTION + ". Manage a CLIENT  \n" + MANAGE_PET_OPTION
+			+ ". Manage a PET \n" + CONSULT_TREATMENT_INFO + ". Consult TREATMENT info \n" + EXIT + ". Exit";
+	final static String CLIENT_SUBMENU = "Press " + REGISTER + " to register a client, " + EDIT
+			+ " to edit a client or " + DELETE + " to delete one.";	
+	final static String PET_SUBMENU = "Press " + REGISTER + " to register a pet, " + EDIT
+			+ " to edit a pet or " + DELETE + " to delete one or " + LIST + " to list all pets.";
+	final static String TREATMENT_SUBMENU = "Press " + FIRST_QUERY
+			+ " to see date and price for the last treatment applied to a client\'s pet and "
+			+ SECOND_QUERY + " to see all treatments that all pets had.";
 	/**
 	 * @param args
 	 */
@@ -37,40 +48,39 @@ public class Principal {
 	 */
 	public static void main(String[] args) {
 		String documentID = "";
-	//	PatientDAO patientDAO = new PatientDAO();
-		TreatmentDAO treatmentDAO = new TreatmentDAO();
 		Client client = null;
-		ArrayList<Patient> pets = null;
-		ClientService clientService = new  ClientService();
+		List<Patient> pets = null;
+		ClientService clientService = new ClientService();
 		PatientService patientService = new PatientService();
-		//TODO meter menu en strings y llamarlos
-		int opcion = Leer.pedirEntero(MANAGE_CLIENT_OPTION +". Manage a CLIENT  \n" + MANAGE_PET_OPTION+". Manage a PET \n" + CONSULT_TREATMENT_INFO+". Consult TREATMENT info \n"
-				+ EXIT+". Exit");
+		TreatmentService treatmentService = new TreatmentService();
+	
+		
+		int opcion = Leer.pedirEntero(MAIN_MENU);
 		while (opcion != 0) {
 			switch (opcion) {
 			case MANAGE_CLIENT_OPTION:
-				int opt = Leer.pedirEntero("Press " + REGISTER + " to register a client, " + EDIT
-						+ " to edit a client or " + DELETE + " to delete one.");
+				int opt = Leer.pedirEntero(CLIENT_SUBMENU);
 				switch (opt) {
 				case REGISTER:
 					System.out.println("Complete the following information in order to register a new client: ");
 					Client newClient = gatherClientData(REGISTER, null);
-					clientService.insertClient(newClient);
+					showResult(clientService.insertClient(newClient));
+			
 					break;
 				case EDIT:
 					documentID = Leer.pedirCadena("Insert client\'s document id: ");
 					client = clientService.checkClientByDocumentID(documentID);
-					if(client != null) {
+					if (client != null) {
 						Client editedClient = gatherClientData(EDIT, client);
-						clientService.editClient(editedClient);
+						showResult(clientService.editClient(editedClient));
 					}
 					client = null;
 					break;
 				case DELETE:
 					documentID = Leer.pedirCadena("Insert client\'s document id: ");
 					client = clientService.checkClientByDocumentID(documentID);
-					if(client != null) {
-						clientService.deleteClient(client);
+					if (client != null) {
+						showResult(clientService.deleteClient(client));
 					}
 					client = null;
 					break;
@@ -82,17 +92,15 @@ public class Principal {
 				client = clientService.checkClientByDocumentID(documentID);
 				if (client != null) {
 					int petOption = 0;
-					petOption = Leer.pedirEntero("Press " + REGISTER + " to register a pet, " + EDIT
-							+ " to edit a pet or " + DELETE + " to delete one or "+LIST+ " to list all pets.");
+					petOption = Leer.pedirEntero(PET_SUBMENU);
 					switch (petOption) {
 					case REGISTER:
-						System.out.println("ID cliente: "+client.getId());
 						Patient newPatient = getPatientData(REGISTER, client, null);
-						patientService.insertPatient(newPatient);
+						showResult(patientService.insertPatient(newPatient));
 						break;
 					case EDIT:
 						pets = new ArrayList<Patient>();
-					//	pets = showAllPets(client, patientDAO);
+						pets = showAllPets(client, patientService);
 						if (pets.size() >= 1) {
 							int numberPet = Leer.pedirEntero("Insert number of pet you want to edit ");
 							while (numberPet > pets.size() + 1 || numberPet < 0) {
@@ -101,8 +109,7 @@ public class Principal {
 							if (numberPet <= pets.size() + 1 && numberPet >= 1) {
 								Patient patientToUpdate = pets.get(numberPet - 1);
 								Patient updatedPatient = getPatientData(EDIT, client, patientToUpdate);
-							//	boolean resAction = patientDAO.updatePatient(updatedPatient);
-								//showResult(resAction);
+							showResult(patientService.editPatient(updatedPatient));
 							} else {
 								System.out.println("Not a valid option ");
 							}
@@ -113,113 +120,93 @@ public class Principal {
 						break;
 					case DELETE:
 						pets = new ArrayList<Patient>();
-				//		pets = showAllPets(client, patientDAO);
+						pets = showAllPets(client, patientService);
 						if (pets.size() >= 1) {
 							int number = Leer.pedirEntero("Insert number of pet you want to delete: ");
 							while (number > pets.size() + 1 || number < 0) {
 								number = Leer.pedirEntero("Insert again the number of pet you want to edit: ");
 							}
 							if (number <= pets.size() + 1 && number >= 1) {
-								
-//								boolean deletedPet = patientDAO.deletePatient(pets.get(number - 1).getId());
-//								showResult(deletedPet);
+								showResult(patientService.deletePatient(pets.get(number - 1)));
 							}
 						} else {
 							System.out.println("There are no pets for this client.");
 						}
 						break;
 					case LIST:
-						pets = new ArrayList<Patient>();
-					//	pets = showAllPets(client, patientDAO);
-						
+						showAllPets(client, patientService);
 						break;
 					default:
 						break;
 					}
-				} else { //FINAL IF
+				} else { 
 					System.out.println("Client was not found");
 				}
-				
-				
 				break;
 
 			case CONSULT_TREATMENT_INFO:
-
-					Map<String, Treatment> list = new TreeMap<String, Treatment>();
-					documentID = Leer.pedirCadena("Insert client\'s document id: ");
-					client = new Client();
-				//	client = clientDAOImpl.checkClient(documentID);
-					if(client != null) {
-						int queryNumber = Leer.pedirEntero("Press " + FIRST_QUERY + " to see date and price for the last treatment applied to a client\'s pet and " + SECOND_QUERY
-								+ " to see all treatments that all pets had.");
-						switch (queryNumber) {
-						case FIRST_QUERY:
-//							list = treatmentDAO.getLastTreatment(client.getDocumentID());
-							if(list.size() > 0) {
-								for (String key : list.keySet()) {
-									System.out.println( key+ " had "+list.get(key));
-								}
-							}else {
-								System.out.println("This client has no treated pets.");
+				client = null;
+				documentID = Leer.pedirCadena("Insert client\'s document id: ");
+				client = clientService.checkClientByDocumentID(documentID);
+				if (client != null) {
+					int queryNumber = Leer.pedirEntero(TREATMENT_SUBMENU);
+					switch (queryNumber) {
+					case FIRST_QUERY:
+						Map<String, List<AppliedTreatment>> treatmentsList =treatmentService.getPetLastTreatment(client.getId());
+						if (treatmentsList.size() > 0) {
+							for (String key : treatmentsList.keySet()) {
+								Date maxDate = treatmentsList.get(key).stream().map(patient -> patient.getId().getTreatmentDate()).max(Date::compareTo).get();
+								System.out.println("Last treatment for "+key+" was on "+DateHelper.formatDate(maxDate)+" with price of " +treatmentsList.get(key).get(0).getTreatment().getPrice()+" €.");
 							}
-							break;
-						case SECOND_QUERY:
-							Map<String, ArrayList<Treatment>> vaccines = new TreeMap<String, ArrayList<Treatment>>();
-//							vaccines = treatmentDAO.getPetTreatments(client.getDocumentID());
-							if(vaccines.size() > 0) {
-								for(String key: vaccines.keySet()) {
-									//System.out.println(key+ " had "+vaccines.get(key));
-									System.out.println(key+ " had: ");
-									for (int i = 0; i < vaccines.get(key).size(); i++) {
-										System.out.println(i+1+". "+vaccines.get(key).get(i));
-									}
-								}
-							}else {
-								System.out.println("This client has no treated pets.");
-							}
-						
-							break;
-						default:
-							System.out.println("Please enter a valid option.");
-						
+						} else {
+							System.out.println("This client has no treated pets.");
 						}
-					}else {
-						System.out.println("Client was not found.");
+						break;
+					case SECOND_QUERY:
+						Map<String, ArrayList<Treatment>> treatments = new TreeMap<String, ArrayList<Treatment>>();
+						treatments = treatmentService.getPetsTreatments(client.getId());
+						
+						if (treatments.size() > 0) {
+							for (String key : treatments.keySet()) {
+								System.out.println(key + " had: ");
+								for (int i = 0; i < treatments.get(key).size(); i++) {
+									System.out.println(i + 1 + ". " + treatments.get(key).get(i).getDescription());
+								}
+							}
+						} else {
+							System.out.println("This client has no treated pets.");
+						}
+						break;
+					default:
+						System.out.println("Please enter a valid option.");
+
 					}
+				} else {
+					System.out.println("Client was not found.");
+				}
 				break;
-	
-				
+
 			default:
 				Leer.mostrarEnPantalla("Invalid option! \n");
 				break;
 			}
+			System.out.println(MAIN_MENU);
 			opcion = Leer.pedirEntero("Please choose another option: ");
 		}
-
 	}
 
-	public static void showResult(boolean result) {
-		if (result) {
-			Leer.mostrarEnPantalla("The action was completed successfully");
-		} else {
-			Leer.mostrarEnPantalla("There was en error. Please try again.");
-		}
-	}
-
-/*	
-	
-	public static ArrayList<Patient> showAllPets(Client client, PatientService servicePatient) {
-		//ArrayList<Patient> pets = servicePatient.
-		
+	public static List<Patient> showAllPets(Client client, PatientService servicePatient) {
+		List<Patient> pets = servicePatient.getAllPatientsByOwnerID(client.getId());
 		if (pets != null) {
 			for (int i = 0; i < pets.size(); i++) {
-				Leer.mostrarEnPantalla((i + 1) + " " + pets.get(i).getName()+ " age "+pets.get(i).getAge()+ " weight "+pets.get(i).getWeight());
+				Leer.mostrarEnPantalla((i + 1) + " " + pets.get(i).getName() + " is " + pets.get(i).getAge()
+						+ " years old and weights " + pets.get(i).getWeight());
 			}
 			return pets;
 		}
 		return null;
 	}
-*/
+
 	public static Patient getPatientData(int option, Client client, Patient patient) {
 		if (option == REGISTER) {
 			Patient newPatient = new Patient();
@@ -260,5 +247,11 @@ public class Principal {
 		}
 		return null;
 	}
-	
+	public static void showResult(boolean res) {
+		if(res) {
+			System.out.println("Action was completed successfully");
+		}else {
+			System.out.println("There was en error. The action could not be completed.");
+		}
+	}
 }

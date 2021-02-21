@@ -1,8 +1,9 @@
 package dao;
 
 
-import java.util.ArrayList;
+import java.util.List;
 import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
 import model.Patient;
 
 public class PatientDAO extends DaoRepository<Patient, Integer>{
@@ -32,11 +33,11 @@ public class PatientDAO extends DaoRepository<Patient, Integer>{
 		super.delete(entity);
 	}
 
-	@SuppressWarnings("unchecked")
-	public ArrayList<Patient> getAllPatients(int ownerID){
-		ArrayList<Patient> pets = null;
+	public List<Patient> getAllPatients(int ownerID){
 		EntityManager em = this.getEntityManager();	
-		return (ArrayList<Patient>) em.createNamedQuery("Patient.findAll").setParameter("ownerID", ownerID);
+		TypedQuery<Patient> query = em.createQuery("SELECT p FROM Patient p WHERE p.client.id = :ownerID" , Patient.class);
+		List<Patient> petsList = query.setParameter("ownerID", ownerID).getResultList();
+		return petsList;
 		
 	}
 

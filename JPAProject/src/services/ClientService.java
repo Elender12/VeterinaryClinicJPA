@@ -7,21 +7,27 @@ import dao.FactoryPersistenceManager;
 import model.Client;
 
 public class ClientService {
-	public void insertClient(Client client) {
+	
+	public boolean insertClient(Client client) {
+		boolean res = false;
 		EntityManager em = FactoryPersistenceManager.getInstance().createEntityManager();
 		try {
 			em.getTransaction().begin();
 			ClientDAO clientDao = new ClientDAO(em);
 			clientDao.create(client);
 			em.getTransaction().commit();
+			res = true;
 		} catch (Exception ex) {
 			ex.printStackTrace(System.out);
+			res= false;
 		} finally {
 			em.close();
 		}
+		return res;
 	}
 
-	public void editClient(Client client) {
+	public boolean editClient(Client client) {
+		boolean res = false;
 		EntityManager em = FactoryPersistenceManager.getInstance().createEntityManager();
 		try {
 			em.getTransaction().begin();
@@ -29,23 +35,32 @@ public class ClientService {
 			Client updatedClient = clientDao.update(client);
 			System.out.println(updatedClient.toString());
 			em.getTransaction().commit();
+			res = true;
 		} catch (Exception ex) {
 			ex.printStackTrace(System.out);
+			res= false;
 		}finally {
 			em.close();
 		}
+		return res;
 	}
 
-	public void deleteClient(Client client) {
+	public boolean deleteClient(Client client) {
+		boolean res = false;
 		EntityManager em = FactoryPersistenceManager.getInstance().createEntityManager();
 		try {
 			em.getTransaction().begin();
 			ClientDAO clientDao = new ClientDAO(em);
 			clientDao.delete(client);
 			em.getTransaction().commit();
+			res = true;
 		}catch(Exception ex) {
 			ex.printStackTrace(System.out);
+			res= false;
+		}finally {
+			em.close();
 		}
+		return res;
 	}
 
 	public Client checkClientByDocumentID(String documentID) {

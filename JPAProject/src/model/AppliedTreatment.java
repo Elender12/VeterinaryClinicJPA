@@ -54,4 +54,9 @@ public class AppliedTreatment implements Serializable {
 		this.treatment = treatment;
 	}
 
+	@Override
+	public String toString() {
+		return "AppliedTreatment [id=" + id.getIdPatient()+" "+id.getIdTreatment() + ", patient=" + patient.getName() + ", treatment=" + treatment.getDescription() + " owner: "+patient.getClient().getName();
+	}
+
 }
