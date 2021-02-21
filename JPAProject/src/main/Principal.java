@@ -15,6 +15,12 @@ import services.TreatmentService;
 import utils.DateHelper;
 import utils.Leer;
 
+/*
+ * @author Elena Cirstea
+ *
+ **/
+
+
 public class Principal {
 	final static int OPTION_YES = 0;
 	final static int OPTION_NO = 1;
@@ -40,9 +46,6 @@ public class Principal {
 	final static String TREATMENT_SUBMENU = "Press " + FIRST_QUERY
 			+ " to see date and price for the last treatment applied to a client\'s pet and "
 			+ SECOND_QUERY + " to see all treatments that all pets had.";
-	/**
-	 * @param args
-	 */
 	/**
 	 * @param args
 	 */
